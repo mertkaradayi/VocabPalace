@@ -1,11 +1,9 @@
 [package]
-name = "book-vocab-bot"
+name = "ibooks-highlights"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-rusqlite = "0.29.0"
-clap = "4.0.28"
-dialoguer = { version = "0.10.3", features = ["fuzzy-select"] }
+rusqlite = "0.29"
+dialoguer = "0.10"
 dirs = "5.0"
-colored = "2.0"
