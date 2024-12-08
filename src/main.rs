@@ -25,9 +25,13 @@ fn main() -> Result<()> {
         // Display highlights in terminal
         terminal::display_highlights(&selected_book.title, &highlights);
         
-        // Write highlights to file
+        // Write highlights to files
         match HighlightWriter::new().and_then(|writer| writer.write_highlights(selected_book, &highlights)) {
-            Ok(file_path) => println!("\n✅ Highlights saved to: {}", file_path.display()),
+            Ok((text_path, json_path)) => {
+                println!("\n✅ Files saved:");
+                println!("   📝 Text file: {}", text_path.display());
+                println!("   🔧 JSON file: {}", json_path.display());
+            },
             Err(e) => eprintln!("\n❌ Failed to save highlights: {}", e),
         }
     }
