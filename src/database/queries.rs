@@ -1,8 +1,9 @@
-use rusqlite::{Connection, Result};
 use crate::models::{Book, Highlight};
+use rusqlite::{Connection, Result};
 
 pub fn fetch_books(conn: &Connection) -> Result<Vec<Book>> {
-    let mut stmt = conn.prepare("
+    let mut stmt = conn.prepare(
+        "
         SELECT 
             lib.ZASSETID AS BookID,
             lib.ZTITLE AS Title,
@@ -16,11 +17,13 @@ pub fn fetch_books(conn: &Connection) -> Result<Vec<Book>> {
             lib.ZASSETID = anno.ZANNOTATIONASSETID
         WHERE 
             lib.ZTITLE IS NOT NULL
+            AND lib.ZCONTENTTYPE != 3  -- Exclude PDFs
         GROUP BY 
             lib.ZASSETID, lib.ZTITLE
         ORDER BY 
             MAX(anno.ZANNOTATIONCREATIONDATE) DESC;
-    ")?;
+    ",
+    )?;
 
     let books = stmt
         .query_map([], |row| {
@@ -28,7 +31,8 @@ pub fn fetch_books(conn: &Connection) -> Result<Vec<Book>> {
                 id: row.get(0)?,
                 title: row.get(1)?,
                 author: row.get(2)?,
-                content_type: row.get::<_, Option<i32>>(3)?
+                content_type: row
+                    .get::<_, Option<i32>>(3)?
                     .map(Book::get_content_type_string),
             })
         })?
@@ -42,7 +46,7 @@ pub fn fetch_highlights(conn: &Connection, book_id: &str) -> Result<Vec<Highligh
     let mut stmt = conn.prepare("
         SELECT 
             Z_PK AS AnnotationID,
-            ZANNOTATIONSELECTEDTEXT AS HighlightText,
+            COALESCE(ZANNOTATIONSELECTEDTEXT, ZANNOTATIONREPRESENTATIVETEXT, '[No Text Available]') AS HighlightText,
             datetime(ZANNOTATIONCREATIONDATE + strftime('%s', '2001-01-01'), 'unixepoch') AS CreationDate,
             datetime(ZANNOTATIONMODIFICATIONDATE + strftime('%s', '2001-01-01'), 'unixepoch') AS ModificationDate,
             ZANNOTATIONSTYLE AS Style,
@@ -51,7 +55,8 @@ pub fn fetch_highlights(conn: &Connection, book_id: &str) -> Result<Vec<Highligh
             highlights.ZAEANNOTATION
         WHERE 
             ZANNOTATIONASSETID = ?1
-            AND ZANNOTATIONSELECTEDTEXT IS NOT NULL
+            AND ZANNOTATIONDELETED = 0
+            AND (ZANNOTATIONSELECTEDTEXT IS NOT NULL OR ZANNOTATIONREPRESENTATIVETEXT IS NOT NULL)
         ORDER BY 
             ZPLLOCATIONRANGESTART;
     ")?;
@@ -71,4 +76,6 @@ pub fn fetch_highlights(conn: &Connection, book_id: &str) -> Result<Vec<Highligh
         .collect();
 
     Ok(highlights)
-} 
+}
+
+
