@@ -38,9 +38,7 @@ impl HighlightWriter {
 
         // Write book information
         writeln!(file, "Book: {}", book.title)?;
-        if let Some(author) = &book.author {
-            writeln!(file, "Author: {}", author)?;
-        }
+        writeln!(file, "Author: {}", book.author)?;
         if let Some(content_type) = &book.content_type {
             writeln!(file, "Format: {}", content_type)?;
         }

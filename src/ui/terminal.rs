@@ -21,7 +21,7 @@ pub fn show_book_selection(books: &[Book]) -> Option<usize> {
     let mut options: Vec<String> = books
         .iter()
         .map(|book| {
-            let author = book.author.as_deref().unwrap_or("Unknown Author");
+            let author = &book.author;
             let content_type = book.content_type.as_deref().unwrap_or("Unknown Type");
             let title = if book.title.len() > 50 {
                 format!("{}...", &book.title[..47])
