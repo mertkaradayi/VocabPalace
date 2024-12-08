@@ -146,6 +146,7 @@ dependencies = [
 name = "ibooks-highlights"
 version = "0.1.0"
 dependencies = [
+ "console",
  "dialoguer",
  "dirs",
  "rusqlite",
