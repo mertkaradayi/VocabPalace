@@ -3,18 +3,39 @@ use rusqlite::{Connection, Result};
 
 fn main() -> Result<()> {
     // Path to the library database
-    let db_path = "/Users/imertkaradayi/Library/Containers/com.apple.iBooksX/Data/Documents/BKLibrary/BKLibrary-1-091020131601.sqlite";
+    let library_db_path = "/Users/imertkaradayi/Library/Containers/com.apple.iBooksX/Data/Documents/BKLibrary/BKLibrary-1-091020131601.sqlite";
 
-    // Connect to the database
-    let conn = Connection::open(db_path)?;
+    // Path to the highlights database
+    let highlights_db_path = "/Users/imertkaradayi/Library/Containers/com.apple.iBooksX/Data/Documents/AEAnnotation/AEAnnotation_v10312011_1727_local.sqlite";
 
-    // Query to get book IDs and titles
+    // Connect to the library database
+    let conn = Connection::open(library_db_path)?;
+
+    // Attach the highlights database
+    conn.execute(
+        &format!("ATTACH '{}' AS highlights;", highlights_db_path),
+        [],
+    )?;
+
+    // Query to get books ordered by the last highlight date
     let mut stmt = conn.prepare(
         "
-        SELECT ZASSETID AS BookID, ZTITLE AS Title 
-        FROM ZBKLIBRARYASSET 
-        WHERE ZTITLE IS NOT NULL 
-        ORDER BY ZTITLE;
+        SELECT 
+            lib.ZASSETID AS BookID, 
+            lib.ZTITLE AS Title, 
+            MAX(anno.ZANNOTATIONCREATIONDATE) AS LastHighlightDate
+        FROM 
+            ZBKLIBRARYASSET lib
+        JOIN 
+            highlights.ZAEANNOTATION anno
+        ON 
+            lib.ZASSETID = anno.ZANNOTATIONASSETID
+        WHERE 
+            lib.ZTITLE IS NOT NULL
+        GROUP BY 
+            lib.ZASSETID, lib.ZTITLE
+        ORDER BY 
+            LastHighlightDate DESC;
     ",
     )?;
 
