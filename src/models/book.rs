@@ -15,10 +15,9 @@ impl Book {
     /// Converts the numeric content type to a human-readable format
     pub fn get_content_type_string(content_type: i32) -> String {
         match content_type {
-            1 => "iBooks".to_string(),
-            2 => "iBooks".to_string(),
+            1 | 2 => "iBooks".to_string(),
             3 => "PDF".to_string(),
             _ => "Unknown".to_string(),
         }
     }
-} 
+}

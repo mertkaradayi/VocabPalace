@@ -4,11 +4,11 @@ use std::fs::{self, File};
 use std::io::Write;
 use std::path::PathBuf;
 
-pub struct HighlightWriter {
+pub struct HighlightExporter {
     output_dir: PathBuf,
 }
 
-impl HighlightWriter {
+impl HighlightExporter {
     pub fn new() -> std::io::Result<Self> {
         // Create a directory in the user's home directory
         let home = dirs::home_dir().expect("Could not find home directory");
@@ -18,21 +18,21 @@ impl HighlightWriter {
         Ok(Self { output_dir })
     }
 
-    pub fn write_highlights(
+    pub fn export_highlights(
         &self,
         book: &Book,
         highlights: &[Highlight],
     ) -> std::io::Result<(PathBuf, PathBuf)> {
         // Write the human-readable text file
-        let text_file_path = self.write_text_highlights(book, highlights)?;
+        let text_file_path = self.export_text_highlights(book, highlights)?;
 
         // Write the JSON file for parsing
-        let json_file_path = self.write_json_highlights(book, highlights)?;
+        let json_file_path = self.export_json_highlights(book, highlights)?;
 
         Ok((text_file_path, json_file_path))
     }
 
-    fn write_text_highlights(
+    fn export_text_highlights(
         &self,
         book: &Book,
         highlights: &[Highlight],
@@ -42,9 +42,7 @@ impl HighlightWriter {
             .title
             .replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], "_");
         let filename = format!("{}.txt", safe_title);
-        let file_path = self
-            .output_dir
-            .join(filename);
+        let file_path = self.output_dir.join(filename);
 
         let mut file = File::create(&file_path)?;
 
@@ -82,7 +80,7 @@ impl HighlightWriter {
         Ok(file_path)
     }
 
-    fn write_json_highlights(
+    fn export_json_highlights(
         &self,
         book: &Book,
         highlights: &[Highlight],
@@ -91,9 +89,7 @@ impl HighlightWriter {
             .title
             .replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], "_");
         let filename = format!("{}.json", safe_title);
-        let file_path = self
-            .output_dir
-            .join(filename);
+        let file_path = self.output_dir.join(filename);
 
         let json_data = json!({
             "book": {
@@ -121,3 +117,14 @@ impl HighlightWriter {
     }
 }
 
+/// Helper function to handle the export process and display results
+pub fn export_to_file(book: &Book, highlights: &[Highlight]) {
+    match HighlightExporter::new().and_then(|writer| writer.export_highlights(book, highlights)) {
+        Ok((text_path, json_path)) => {
+            println!("\n✅ Files saved successfully:");
+            println!("   📝 Text file: {}", text_path.display());
+            println!("   🔧 JSON file: {}", json_path.display());
+        }
+        Err(e) => eprintln!("\n❌ Failed to save highlights: {}", e),
+    }
+}

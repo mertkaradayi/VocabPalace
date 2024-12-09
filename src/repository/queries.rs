@@ -4,7 +4,8 @@ use rusqlite::{Connection, Result};
 /// Fetches all books that have highlights from the iBooks library
 /// Returns a vector of Book structs ordered by most recently highlighted
 pub fn fetch_books(conn: &Connection) -> Result<Vec<Book>> {
-    let mut stmt = conn.prepare("
+    let mut stmt = conn.prepare(
+        "
         SELECT 
             lib.ZASSETID,      -- Unique identifier for the book
             lib.ZTITLE,        -- Book title
@@ -17,7 +18,8 @@ pub fn fetch_books(conn: &Connection) -> Result<Vec<Book>> {
             AND lib.ZCONTENTTYPE != 3  -- Exclude PDFs
         GROUP BY lib.ZASSETID, lib.ZTITLE
         ORDER BY MAX(anno.ZANNOTATIONCREATIONDATE) DESC
-    ")?;
+    ",
+    )?;
 
     let books = stmt
         .query_map([], |row| {
@@ -25,7 +27,8 @@ pub fn fetch_books(conn: &Connection) -> Result<Vec<Book>> {
                 id: row.get(0)?,
                 title: row.get(1)?,
                 author: row.get(2)?,
-                content_type: row.get::<_, Option<i32>>(3)?
+                content_type: row
+                    .get::<_, Option<i32>>(3)?
                     .map(Book::get_content_type_string),
             })
         })?
@@ -38,7 +41,8 @@ pub fn fetch_books(conn: &Connection) -> Result<Vec<Book>> {
 /// Fetches all highlights for a specific book
 /// Returns a vector of Highlight structs ordered by their position in the book
 pub fn fetch_highlights(conn: &Connection, book_id: &str) -> Result<Vec<Highlight>> {
-    let mut stmt = conn.prepare("
+    let mut stmt = conn.prepare(
+        "
         SELECT 
             Z_PK,              -- Unique identifier for the highlight
             COALESCE(         -- Get the first non-null value
@@ -60,7 +64,8 @@ pub fn fetch_highlights(conn: &Connection, book_id: &str) -> Result<Vec<Highligh
                 OR ZANNOTATIONREPRESENTATIVETEXT IS NOT NULL
             )
         ORDER BY ZPLLOCATIONRANGESTART
-    ")?;
+    ",
+    )?;
 
     let highlights = stmt
         .query_map([book_id], |row| {
@@ -78,5 +83,3 @@ pub fn fetch_highlights(conn: &Connection, book_id: &str) -> Result<Vec<Highligh
 
     Ok(highlights)
 }
-
-
